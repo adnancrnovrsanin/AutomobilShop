@@ -1,258 +1,247 @@
 import './style.css'
-import { baza } from './baza';
+import { carDatabase } from './carDatabase';
 
-var izabranaMarka = "";
-var izabranModel = "";
-var izabranaBoja = "";
-var cars = baza;
-var opcijeMarke = [];
-var opcijeModela = [];
-var opcijeBoja = [];
-var filters = null;
+let selectedBrand = "";
+let selectedModel = "";
+let selectedColor = "";
+let cars = carDatabase;
+let brandOptions = [];
+let modelOptions = [];
+let colorOptions = [];
+let appliedFilters = null;
 
+// Postavljanje HTML sadržaja u #app element
 document.querySelector('#app').innerHTML = `
   <div class="filters">
-        <div class="filter">
-            <label for="marka">Marka: </label>
-            <select name="marka" id="filter-marka">
-                <option>Izaberite marku</option>
-            </select>
-        </div>
-
-        <div class="filter">
-            <label for="model">Model: </label>
-            <select name="model" id="filter-model">
-                <option>Izaberite model</option>
-            </select>
-        </div>
-
-        <div class="filter">
-            <label for="boja">Boja: </label>
-            <select name="boja" id="filter-boja">
-                <option>Izaberite boju</option>
-            </select>
-        </div>
-
-        <button id="filter-button">Filter</button>
-        <button id="reset-filters">Reset filters</button>
+    <div class="filter">
+      <label for="brand">Marka: </label>
+      <select name="brand" id="filter-brand">
+        <option>Izaberite marku</option>
+      </select>
     </div>
 
-    <div class="cars">
-
+    <div class="filter">
+      <label for="model">Model: </label>
+      <select name="model" id="filter-model">
+        <option>Izaberite model</option>
+      </select>
     </div>
+
+    <div class="filter">
+      <label for="color">Boja: </label>
+      <select name="color" id="filter-color">
+        <option>Izaberite boju</option>
+      </select>
+    </div>
+
+    <button id="filter-button">Filtriraj</button>
+    <button id="reset-filters">Resetuj filtere</button>
+  </div>
+
+  <div class="cars"></div>
 `;
 
-getOpcijeMarke();
-printCarsHtml();
+initializeBrandOptions();
+renderCarsHtml();
 
 function resetFiltersButtonHandler() {
-  filters = null;
-  printCarsHtml();
-  document.getElementById("filter-marka").value = "";
+  appliedFilters = null;
+  renderCarsHtml();
+  document.getElementById("filter-brand").value = "";
   document.getElementById("filter-model").value = "";
-  document.getElementById("filter-boja").value = "";
-  getOpcijeMarke();
-  getOpcijeModela();
-  getOpcijeBoja();
+  document.getElementById("filter-color").value = "";
+  initializeBrandOptions();
+  initializeModelOptions();
+  initializeColorOptions();
 }
 
 function selectChangeHandler(e) {
   switch (e.target.name) {
-    case "marka":
-      izabranaMarka = e.target.value.toLowerCase();
-      filters = {
-        marka: izabranaMarka,
+    case "brand":
+      selectedBrand = e.target.value.toLowerCase();
+      appliedFilters = {
+        brand: selectedBrand,
         model: "",
-        boja: ""
-      }
-      getOpcijeModela();
+        color: ""
+      };
+      initializeModelOptions();
       break;
     case "model":
-      izabranModel = e.target.value.toLowerCase();
-      filters = {
-        marka: izabranaMarka,
-        model: izabranModel,
-        boja: ""
-      }
-      getOpcijeBoja();
+      selectedModel = e.target.value.toLowerCase();
+      appliedFilters = {
+        brand: selectedBrand,
+        model: selectedModel,
+        color: ""
+      };
+      initializeColorOptions();
       break;
-    case "boja":
-      izabranaBoja = e.target.value.toLowerCase();
-      filters = {
-        marka: izabranaMarka,
-        model: izabranModel,
-        boja: izabranaBoja
-      }
+    case "color":
+      selectedColor = e.target.value.toLowerCase();
+      appliedFilters = {
+        brand: selectedBrand,
+        model: selectedModel,
+        color: selectedColor
+      };
       break;
   }
 }
 
 function filterButtonHandler() {
-  filters = {
-    marka: izabranaMarka,
-    model: izabranModel,
-    boja: izabranaBoja
+  appliedFilters = {
+    brand: selectedBrand,
+    model: selectedModel,
+    color: selectedColor
   };
-  printCarsHtml();
+  renderCarsHtml();
 }
 
 function getCarsHtml() {
-  cars = baza;
-  if (filters !== null) {
-    cars = baza.filter(car => {
-      if (filters.marka.length > 0 && car.marka.toLowerCase() !== filters.marka)
+  cars = carDatabase;
+  if (appliedFilters !== null) {
+    cars = carDatabase.filter(car => {
+      if (appliedFilters.brand.length > 0 && car.brand.toLowerCase() !== appliedFilters.brand)
         return false;
-      if (filters.model.length > 0 && car.model.toLowerCase() !== filters.model)
+      if (appliedFilters.model.length > 0 && car.model.toLowerCase() !== appliedFilters.model)
         return false;
-      if (filters.boja.length > 0 && car.boja.toLowerCase() !== filters.boja)
+      if (appliedFilters.color.length > 0 && car.color.toLowerCase() !== appliedFilters.color)
         return false;
-      if (car.kolicina === 0)
+      if (car.quantity === 0)
         return false;
       return true;
     });
   }
   return cars.map(car => {
-    const carDiv = document.createElement('div');
-    carDiv.classList.add('car');
-
-    const markaP = document.createElement('p');
-    markaP.innerText = `Marka: ${car.marka}`;
-
-    const modelP = document.createElement('p');
-    modelP.innerText = `Model: ${car.model}`;
-
-    const img = document.createElement('img');
-    img.src = car.imgUrl;
-    img.alt = "car photo";
-
-    const kolicinaP = document.createElement('p');
-    kolicinaP.innerText = `Kolicina: ${car.kolicina}`;
-
-    const datumPoslednjeProdajeP = document.createElement('p');
-    datumPoslednjeProdajeP.innerText = (car.datumPoslednjeProdaje) ? `Datum poslednje prodaje: ${car.datumPoslednjeProdaje.toLocaleDateString()}` : "";
-
-    const cenaP = document.createElement('p');
-    cenaP.innerText = `Cena: ${car.cena} $`;
-
-    const bojaP = document.createElement('p');
-    bojaP.innerText = `Boja: ${car.boja}`;
-
-    const narucivanjeButton = document.createElement('button');
-    narucivanjeButton.classList.add('narucivanje');
-    narucivanjeButton.innerText = "Naruci";
-    narucivanjeButton.addEventListener('click', () => narucivanje(car.id));
-
-    carDiv.appendChild(markaP);
-    carDiv.appendChild(modelP);
-    carDiv.appendChild(img);
-    carDiv.appendChild(kolicinaP);
-    carDiv.appendChild(datumPoslednjeProdajeP);
-    carDiv.appendChild(cenaP);
-    carDiv.appendChild(bojaP);
-    carDiv.appendChild(narucivanjeButton);
-
+    const carDiv = createCarHtml(car);
     return carDiv;
-
-    // return ` <---- Ovo je bilo pre refaktorisanja
-    //   <div class="car">
-    //       <p>Marka: ${car.marka}</p>
-
-    //       <p>Model: ${car.model}</p>
-
-    //       <img src="${car.imgUrl}" alt="car photo">
-
-    //       <p>Kolicina: ${car.kolicina}</p>
-
-    //       ${car.datumPoslednjeProdaje !== null ? `<p>Datum poslednje prodaje: ${car.datumPoslednjeProdaje.toLocaleDateString()}</p>` : ""}
-
-    //       <p>Cena: ${car.cena} $</p>
-
-    //       <p>Boja: ${car.boja} </p>
-
-    //       <button>Naruci</button>
-    //   </div>
-    // `;
   });
 }
 
-function narucivanje(carId) {
+function orderCar(carId) {
   alert("Uspesno ste narucili automobil");
   const car = cars.find(car => car.id === carId);
-  car.kolicina--;
-  car.datumPoslednjeProdaje = new Date();
-  getOpcijeMarke();
-  getOpcijeModela();
-  getOpcijeBoja();
-  printCarsHtml();
+  car.quantity--;
+  car.lastPurchaseDate = new Date();
+  initializeBrandOptions();
+  initializeModelOptions();
+  initializeColorOptions();
+  renderCarsHtml();
 }
 
-function printCarsHtml() {
+function renderCarsHtml() {
   const carsHtml = getCarsHtml();
   const carsElement = document.querySelector('.cars');
   carsElement.innerHTML = "";
-  for (let carHtml of carsHtml) {
+  carsHtml.forEach(carHtml => {
     carsElement.appendChild(carHtml);
-  }
+  });
 }
 
-function printOptionsToSelectHtml(selectElement, options) {
+function initializeOptionsForSelect(selectElement, options) {
   selectElement.innerHTML = "";
   const nullOptionElement = document.createElement('option');
   nullOptionElement.value = "";
   nullOptionElement.innerText = "Izaberite opciju";
   selectElement.appendChild(nullOptionElement);
-  for (let option of options) {
+  options.forEach(option => {
     const optionElement = document.createElement('option');
     optionElement.value = option;
     optionElement.innerText = option;
     selectElement.appendChild(optionElement);
-  }
+  });
 }
 
-function getOpcijeMarke() {
-  opcijeMarke = [];
-  const selectElement = document.getElementById("filter-marka");
-  for (let car of baza) {
-    if (!opcijeMarke.includes(car.marka.toLowerCase()) && car.kolicina > 0) {
-      opcijeMarke.push(car.marka.toLowerCase());
+function initializeBrandOptions() {
+  brandOptions = [];
+  const selectElement = document.getElementById("filter-brand");
+  for (const car of carDatabase) {
+    if (!brandOptions.includes(car.brand.toLowerCase()) && car.quantity > 0) {
+      brandOptions.push(car.brand.toLowerCase());
     }
   }
-  printOptionsToSelectHtml(selectElement, opcijeMarke);
-  getOpcijeModela();
+  initializeOptionsForSelect(selectElement, brandOptions);
+  initializeModelOptions();
 }
 
-function getOpcijeModela() {
-  opcijeModela = [];
+function initializeModelOptions() {
+  modelOptions = [];
   const selectElement = document.getElementById("filter-model");
-  for (let car of baza) {
-    if (izabranaMarka.length > 0 && car.marka.toLowerCase() !== izabranaMarka)
+  for (const car of carDatabase) {
+    if (selectedBrand.length > 0 && car.brand.toLowerCase() !== selectedBrand)
       continue;
-    if (!opcijeModela.includes(car.model.toLowerCase()) && car.kolicina > 0) {
-      opcijeModela.push(car.model.toLowerCase());
+    if (!modelOptions.includes(car.model.toLowerCase()) && car.quantity > 0) {
+      modelOptions.push(car.model.toLowerCase());
     }
   }
-  printOptionsToSelectHtml(selectElement, opcijeModela);
-  getOpcijeBoja();
+  initializeOptionsForSelect(selectElement, modelOptions);
+  initializeColorOptions();
 }
 
-function getOpcijeBoja() {
-  opcijeBoja = [];
-  const selectElement = document.getElementById("filter-boja");
-  for (let car of baza) {
-    if (izabranaMarka.length > 0 && car.marka.toLowerCase() !== izabranaMarka)
+function initializeColorOptions() {
+  colorOptions = [];
+  const selectElement = document.getElementById("filter-color");
+  for (const car of carDatabase) {
+    if (selectedBrand.length > 0 && car.brand.toLowerCase() !== selectedBrand)
       continue;
-    if (izabranModel.length > 0 && car.model.toLowerCase() !== izabranModel)
+    if (selectedModel.length > 0 && car.model.toLowerCase() !== selectedModel)
       continue;
-    if (!opcijeBoja.includes(car.boja.toLowerCase()) && car.kolicina > 0) {
-      opcijeBoja.push(car.boja.toLowerCase());
+    if (!colorOptions.includes(car.color.toLowerCase()) && car.quantity > 0) {
+      colorOptions.push(car.color.toLowerCase());
     }
   }
-  printOptionsToSelectHtml(selectElement, opcijeBoja);
+  initializeOptionsForSelect(selectElement, colorOptions);
 }
 
-document.getElementById("filter-marka").addEventListener('change', selectChangeHandler);
+// Event listeneri za promjene
+document.getElementById("filter-brand").addEventListener('change', selectChangeHandler);
 document.getElementById("filter-model").addEventListener('change', selectChangeHandler);
-document.getElementById("filter-boja").addEventListener('change', selectChangeHandler);
+document.getElementById("filter-color").addEventListener('change', selectChangeHandler);
 document.getElementById("filter-button").addEventListener('click', filterButtonHandler);
 document.getElementById("reset-filters").addEventListener('click', resetFiltersButtonHandler);
 
+// Pomoćna funkcija za kreiranje HTML-a za prikaz automobila
+function createCarHtml(car) {
+  const carDiv = document.createElement('div');
+  carDiv.classList.add('car');
+
+  const brandP = createParagraph(`Marka: ${car.brand}`);
+  const modelP = createParagraph(`Model: ${car.model}`);
+  const img = createImage(car.imgUrl, "car photo");
+  const quantityP = createParagraph(`Kolicina: ${car.quantity}`);
+  const lastPurchaseDateP = createParagraph(car.lastPurchaseDate ? `Datum poslednje prodaje: ${car.lastPurchaseDate.toLocaleDateString()}` : "");
+  const priceP = createParagraph(`Cena: ${car.price} $`);
+  const colorP = createParagraph(`Boja: ${car.color}`);
+
+  const orderButton = createButton("Naruci");
+  orderButton.addEventListener('click', () => orderCar(car.id));
+
+  appendElements(carDiv, [brandP, modelP, img, quantityP, lastPurchaseDateP, priceP, colorP, orderButton]);
+
+  return carDiv;
+}
+
+// Pomoćne funkcije za kreiranje elemenata
+function createParagraph(text) {
+  const p = document.createElement('p');
+  p.innerText = text;
+  return p;
+}
+
+function createImage(src, alt) {
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = alt;
+  return img;
+}
+
+function createButton(text) {
+  const button = document.createElement('button');
+  button.classList.add('narucivanje');
+  button.innerText = text;
+  return button;
+}
+
+function appendElements(parent, elements) {
+  elements.forEach(element => {
+    parent.appendChild(element);
+  });
+}

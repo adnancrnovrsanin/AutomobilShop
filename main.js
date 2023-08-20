@@ -180,6 +180,9 @@ function narucivanje(carId) {
   const car = cars.find(car => car.id === carId);
   car.kolicina--;
   car.datumPoslednjeProdaje = new Date();
+  getOpcijeMarke();
+  getOpcijeModela();
+  getOpcijeBoja();
   printCarsHtml();
 }
 
@@ -210,7 +213,7 @@ function getOpcijeMarke() {
   opcijeMarke = [];
   const selectElement = document.getElementById("filter-marka");
   for (let car of baza) {
-    if (!opcijeMarke.includes(car.marka.toLowerCase())) {
+    if (!opcijeMarke.includes(car.marka.toLowerCase()) && car.kolicina > 0) {
       opcijeMarke.push(car.marka.toLowerCase());
     }
   }
@@ -224,7 +227,7 @@ function getOpcijeModela() {
   for (let car of baza) {
     if (izabranaMarka.length > 0 && car.marka.toLowerCase() !== izabranaMarka)
       continue;
-    if (!opcijeModela.includes(car.model.toLowerCase())) {
+    if (!opcijeModela.includes(car.model.toLowerCase()) && car.kolicina > 0) {
       opcijeModela.push(car.model.toLowerCase());
     }
   }
@@ -240,7 +243,7 @@ function getOpcijeBoja() {
       continue;
     if (izabranModel.length > 0 && car.model.toLowerCase() !== izabranModel)
       continue;
-    if (!opcijeBoja.includes(car.boja.toLowerCase())) {
+    if (!opcijeBoja.includes(car.boja.toLowerCase()) && car.kolicina > 0) {
       opcijeBoja.push(car.boja.toLowerCase());
     }
   }
